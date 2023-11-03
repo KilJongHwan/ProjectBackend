@@ -36,8 +36,7 @@ public class MemberController {
         boolean signupResult = dao.signupCheck(id,pwd, email, phone);
 
         if (signupResult) {
-            // 회원 가입 로직을 여기에 추가할 수 있습니다.
-            // MemberDTO를 사용하여 필요한 회원 정보에 접근할 수 있습니다.
+
         }
 
         return new ResponseEntity<>(signupResult, HttpStatus.OK);

@@ -43,11 +43,17 @@ public class EmailService {
         message.addRecipients(Message.RecipientType.TO, to);
         message.setSubject("회원가입 이메일 인증");
 
-        String msgg = "<div style='margin:100px;'>";
-        msgg += "<h1> Sign-up Code</h1>";
-        msgg += "CODE : <strong>" + ePw + "</strong><div><br/> ";
+        String msgg = "<html><body>";
+        msgg += "<div style='width: 100%; background-color: #f4f4f4; padding: 20px; text-align: center;'>";
+        msgg += "<div style='background-color: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 20px; display: inline-block;'>";
+        msgg += "<h1 style='color: #333;'>회원가입 이메일 인증</h1>";
+        msgg += "<p style='font-size: 16px; color: #666;'>아래 인증 코드를 입력 하여 주세요!!.</p>";
+        msgg += "<p style='font-size: 20px; color: #0077FF;'>CODE : <strong>" + ePw + "</strong></p>";
         msgg += "</div>";
-        message.setText(msgg, "utf-8", "html");
+        msgg += "</div>";
+        msgg += "</body></html>";
+
+        message.setContent(msgg, "text/html; charset=utf-8");
         message.setFrom(new InternetAddress("dafr47@naver.com", "kil", "UTF-8"));
 
         return message;

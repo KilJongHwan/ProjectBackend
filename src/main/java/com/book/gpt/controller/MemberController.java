@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -27,18 +28,20 @@ public class MemberController {
     }
     @PostMapping("/signup")
     public ResponseEntity<Boolean> memberSignup(@RequestBody MemberDTO memberDTO) {
-        String id = memberDTO.getId();
-        String pwd = memberDTO.getPassword();
-        String email = memberDTO.getEmail();
-        String phone = memberDTO.getTel();
-
         MemberDAO dao = new MemberDAO();
-        boolean signupResult = dao.signupCheck(id,pwd, email, phone);
+        boolean regResult = false;
 
-        if (signupResult) {
+        // 비밀번호를 해싱해서 저장
+        String plainPassword = memberDTO.getPassword();
+        String hashedPassword = dao.hashPassword(plainPassword);
+        memberDTO.setPassword(hashedPassword);
 
+        if (dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel())) {
+            // 회원 가입을 수행
+            regResult = dao.signup(memberDTO);
         }
 
-        return new ResponseEntity<>(signupResult, HttpStatus.OK);
+        return new ResponseEntity<>(regResult, HttpStatus.OK);
     }
+
 }

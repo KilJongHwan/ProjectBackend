@@ -32,34 +32,26 @@ public class MemberDAO {
     public boolean loginCheck(String id, String pwd) {
         try {
             conn = Common.getConnection();
-            stmt = conn.createStatement();
-            String sql = "SELECT * FROM MEMBER WHERE ID = " + "'" + id + "'";
-            rs = stmt.executeQuery(sql);
-
-            while(rs.next()) {
-                String sqlId = rs.getString("ID"); // 쿼리문 수행 결과에서 ID값을 가져 옴
-                String sqlPwd = rs.getString("PWD");
-                System.out.println("ID : " + sqlId);
-                System.out.println("PWD : " + hashPassword(sqlPwd));
-                if(id.equals(sqlId) && pwd.equals(sqlPwd)) {
-                    Common.close(rs);
-                    Common.close(stmt);
-                    Common.close(conn);
-                    return true;
+            String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+            pStmt = conn.prepareStatement(sql);
+            pStmt.setString(1, id);
+            rs = pStmt.executeQuery();
+            if (rs.next()) {
+                String sqlPwd = rs.getString("PASSWORD"); // 데이터베이스에서 해싱된 비밀번호를 가져옴
+                if (hashPassword(pwd).equals(sqlPwd)) {
+                    return true; // 해싱된 비밀번호와 입력한 비밀번호가 일치하면 로그인 성공
                 }
             }
-            Common.close(rs);
-            Common.close(stmt);
-            Common.close(conn);
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        Common.close(rs);
+        Common.close(pStmt);
+        Common.close(conn);
         return false;
     }
 
-
-
-    public boolean signupCheck(String id, String pwd, String email, String phone) {
+    public boolean signupCheck(String id, String email, String phone) {
         try {
             conn = Common.getConnection();
             String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR PHONE = ?";
@@ -90,13 +82,37 @@ public class MemberDAO {
     }
 
     // 회원 가입 메서드
+//    public boolean signup(MemberDTO member) {
+//        try {
+//            conn = Common.getConnection();
+//            String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH, ADMIN) VALUES(?, ?, ?, ?, ?, ?, ?)";
+//            pStmt = conn.prepareStatement(sql);
+//            pStmt.setString(1, member.getId());
+//            pStmt.setString(2, member.getPassword());
+//            pStmt.setString(3, member.getName());
+//            pStmt.setString(4, member.getEmail());
+//            pStmt.setString(5, member.getTel());
+//            pStmt.setInt(6, member.getCash());
+//            pStmt.setBoolean(7, member.isAdmin());
+//
+//            int rowsAffected = pStmt.executeUpdate();
+//
+//            return rowsAffected > 0;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return false;
+//        } finally {
+//            Common.close(pStmt);
+//            Common.close(conn);
+//        }
+//    }
     public boolean signup(MemberDTO member) {
         try {
             conn = Common.getConnection();
             String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH, ADMIN) VALUES(?, ?, ?, ?, ?, ?, ?)";
             pStmt = conn.prepareStatement(sql);
             pStmt.setString(1, member.getId());
-            pStmt.setString(2, member.getPassword());
+            pStmt.setString(2, member.getPassword()); // 비밀번호 해싱 필요
             pStmt.setString(3, member.getName());
             pStmt.setString(4, member.getEmail());
             pStmt.setString(5, member.getTel());
@@ -106,6 +122,7 @@ public class MemberDAO {
             int rowsAffected = pStmt.executeUpdate();
 
             return rowsAffected > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -113,9 +130,7 @@ public class MemberDAO {
             Common.close(pStmt);
             Common.close(conn);
         }
+
     }
-
-
-
 
 }

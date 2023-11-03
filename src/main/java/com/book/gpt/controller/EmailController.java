@@ -31,7 +31,6 @@ public class EmailController {
         // 이메일 인증 코드를 저장
         emailService.saveVerificationCode(to, ePw);
 
-
         return new ResponseEntity<>(isVerificationEmailSent, HttpStatus.OK);
     }
 

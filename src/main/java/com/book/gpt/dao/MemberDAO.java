@@ -57,6 +57,8 @@ public class MemberDAO {
         return false;
     }
 
+
+
     public boolean signupCheck(String id, String pwd, String email, String phone) {
         try {
             conn = Common.getConnection();

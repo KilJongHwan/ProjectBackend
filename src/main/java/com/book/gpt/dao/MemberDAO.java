@@ -3,13 +3,13 @@ package com.book.gpt.dao;
 import com.book.gpt.common.Common;
 import com.book.gpt.dto.MemberDTO;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Base64;
+
 
 public class MemberDAO {
     private Connection conn = null;
@@ -17,16 +17,19 @@ public class MemberDAO {
     private ResultSet rs = null;
     private PreparedStatement pStmt = null;
 
-    // 비밀번호를 해싱하는 메서드
     public String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = md.digest(password.getBytes());
-            return Base64.getEncoder().encodeToString(hashedBytes);
-        } catch (NoSuchAlgorithmException e) {
+            byte[] hashedBytes = md.digest(password.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * hashedBytes.length);
+            for (byte b : hashedBytes) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString();
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     public boolean loginCheck(String id, String pwd) {
@@ -38,7 +41,7 @@ public class MemberDAO {
             rs = pStmt.executeQuery();
             if (rs.next()) {
                 String sqlPwd = rs.getString("PASSWORD"); // 데이터베이스에서 해싱된 비밀번호를 가져옴
-                if (hashPassword(pwd).equals(sqlPwd)) {
+                if (pwd.equals(sqlPwd)) {
                     return true; // 해싱된 비밀번호와 입력한 비밀번호가 일치하면 로그인 성공
                 }
             }
@@ -89,7 +92,7 @@ public class MemberDAO {
             String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
             pStmt = conn.prepareStatement(sql);
             pStmt.setString(1, member.getId());
-            pStmt.setString(2, hashPassword(member.getPassword())); // 해싱된 비밀번호를 저장
+            pStmt.setString(2, member.getPassword()); // 해싱된 비밀번호를 저장
             pStmt.setString(3, member.getName());
             pStmt.setString(4, member.getEmail());
             pStmt.setString(5, member.getTel());

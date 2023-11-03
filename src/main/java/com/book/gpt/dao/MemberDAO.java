@@ -51,10 +51,11 @@ public class MemberDAO {
         return false;
     }
 
+    // 중복값 체크 메서드
     public boolean signupCheck(String id, String email, String phone) {
         try {
             conn = Common.getConnection();
-            String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR PHONE = ?";
+            String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR TEL = ?";
             pStmt = conn.prepareStatement(sql);
             pStmt.setString(1, id);
             pStmt.setString(2, email);
@@ -81,48 +82,22 @@ public class MemberDAO {
         }
     }
 
-    // 회원 가입 메서드
-//    public boolean signup(MemberDTO member) {
-//        try {
-//            conn = Common.getConnection();
-//            String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH, ADMIN) VALUES(?, ?, ?, ?, ?, ?, ?)";
-//            pStmt = conn.prepareStatement(sql);
-//            pStmt.setString(1, member.getId());
-//            pStmt.setString(2, member.getPassword());
-//            pStmt.setString(3, member.getName());
-//            pStmt.setString(4, member.getEmail());
-//            pStmt.setString(5, member.getTel());
-//            pStmt.setInt(6, member.getCash());
-//            pStmt.setBoolean(7, member.isAdmin());
-//
-//            int rowsAffected = pStmt.executeUpdate();
-//
-//            return rowsAffected > 0;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return false;
-//        } finally {
-//            Common.close(pStmt);
-//            Common.close(conn);
-//        }
-//    }
+    // 회원가입 완료 메서드
     public boolean signup(MemberDTO member) {
         try {
             conn = Common.getConnection();
-            String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH, ADMIN) VALUES(?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
             pStmt = conn.prepareStatement(sql);
             pStmt.setString(1, member.getId());
-            pStmt.setString(2, member.getPassword()); // 비밀번호 해싱 필요
+            pStmt.setString(2, hashPassword(member.getPassword())); // 해싱된 비밀번호를 저장
             pStmt.setString(3, member.getName());
             pStmt.setString(4, member.getEmail());
             pStmt.setString(5, member.getTel());
             pStmt.setInt(6, member.getCash());
-            pStmt.setBoolean(7, member.isAdmin());
 
             int rowsAffected = pStmt.executeUpdate();
 
             return rowsAffected > 0;
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -130,7 +105,6 @@ public class MemberDAO {
             Common.close(pStmt);
             Common.close(conn);
         }
-
     }
 
 }

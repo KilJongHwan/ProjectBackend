@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -17,7 +16,7 @@ public class MemberController {
     @PostMapping("/login")
     public ResponseEntity<Boolean> memberLogin(@RequestBody Map<String, String> loginData) {
         String id = loginData.get("id");
-        String pwd = loginData.get("pwd");
+        String pwd = loginData.get("password");
 
         System.out.println("ID : " + id);
         System.out.println("PWD : " + pwd);
@@ -39,6 +38,9 @@ public class MemberController {
         if (dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel())) {
             // 회원 가입을 수행
             regResult = dao.signup(memberDTO);
+            System.out.println("회원가입");
+        } else {
+            System.out.println("중복된 아이디, 이메일, 전화 번호가 존재합니다 ");
         }
 
         return new ResponseEntity<>(regResult, HttpStatus.OK);

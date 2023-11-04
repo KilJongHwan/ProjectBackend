@@ -1,30 +1,27 @@
-package com.book.gpt.common;
+package com.book.gpt.JWT;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
-public class CustomUserDetails implements UserDetails {
+public class JwtAuthentication implements UserDetails {
+    private final String username;
 
-    private String username;
-    private String password;
-    private Collection<? extends GrantedAuthority> authorities;
-
-    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
+    public JwtAuthentication(String username) {
         this.username = username;
-        this.password = password;
-        this.authorities = authorities;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        // 권한 정보를 반환하는 메서드
+        return null;
     }
 
     @Override
     public String getPassword() {
-        return password;
+        // 비밀번호를 반환하는 메서드
+        return null;
     }
 
     @Override
@@ -52,3 +49,4 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 }
+

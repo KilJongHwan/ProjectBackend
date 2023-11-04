@@ -2,6 +2,8 @@ package com.book.gpt.controller;
 
 import com.book.gpt.dao.MemberDAO;
 import com.book.gpt.dto.MemberDTO;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,27 +17,51 @@ import java.util.Map;
 @RequestMapping("/users")
 public class MemberController {
     // 로그인
+
+//    @PostMapping("/login")
+//    public ResponseEntity<Boolean> memberLogin(@RequestBody Map<String, String> loginData) {
+//        String id = loginData.get("id");
+//        String pwd = loginData.get("password");
+//
+//        MemberDAO dao = new MemberDAO();
+//
+//
+//        boolean loginResult  = dao.loginCheck(id, pwd);
+//
+//        System.out.println("ID : " + id);
+//        System.out.println("PWD : " + pwd);
+//
+//        if (loginResult) {
+//            // 사용자의 정보를 포함한 응답 생성
+//            return new ResponseEntity<>(loginResult, HttpStatus.OK);
+//
+//        } else {
+//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+//        }
+//    }
     @PostMapping("/login")
-    public ResponseEntity<Boolean> memberLogin(@RequestBody Map<String, String> loginData) {
+    public ResponseEntity<String> memberLogin(@RequestBody Map<String, String> loginData) {
         String id = loginData.get("id");
         String pwd = loginData.get("password");
 
         MemberDAO dao = new MemberDAO();
 
-
-        boolean loginResult  = dao.loginCheck(id, pwd);
-
-        System.out.println("ID : " + id);
-        System.out.println("PWD : " + pwd);
+        boolean loginResult = dao.loginCheck(id, pwd);
 
         if (loginResult) {
-            // 사용자의 정보를 포함한 응답 생성
-            return new ResponseEntity<>(loginResult, HttpStatus.OK);
+            // 로그인 성공 시 토큰 생성
+            String token = Jwts.builder()
+                    .setSubject(id) // 사용자 아이디를 토큰의 주체로 설정
+                    .signWith(SignatureAlgorithm.HS256, "secretKey") // 서명 알고리즘 및 비밀 키
+                    .compact();
 
+            // 클라이언트에게 토큰 반환
+            return new ResponseEntity<>(token, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
     }
+
 
     @PostMapping("/signup")
     public ResponseEntity<Boolean> memberSignup(@RequestBody MemberDTO memberDTO) {

@@ -2,6 +2,7 @@ package com.book.gpt.dao;
 
 import com.book.gpt.common.Common;
 import com.book.gpt.dto.MemberDTO;
+import org.springframework.stereotype.Repository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -10,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+
+@Repository
 
 public class MemberDAO {
     private Connection conn = null;
@@ -41,18 +44,23 @@ public class MemberDAO {
             rs = pStmt.executeQuery();
             if (rs.next()) {
                 String sqlPwd = rs.getString("PASSWORD"); // 데이터베이스에서 해싱된 비밀번호를 가져옴
-                if (pwd.equals(sqlPwd)) {
+                String hashedPwd = hashPassword(pwd); // 사용자 입력 비밀번호를 해싱
+
+                if (sqlPwd.equals(hashedPwd)) {
                     return true; // 해싱된 비밀번호와 입력한 비밀번호가 일치하면 로그인 성공
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Common.close(rs);
+            Common.close(pStmt);
+            Common.close(conn);
         }
-        Common.close(rs);
-        Common.close(pStmt);
-        Common.close(conn);
         return false;
     }
+
+
 
     // 중복값 체크 메서드
     public boolean signupCheck(String id, String email, String phone) {
@@ -86,13 +94,18 @@ public class MemberDAO {
     }
 
     // 회원가입 완료 메서드
+    // 회원가입 완료 메서드
     public boolean signup(MemberDTO member) {
         try {
             conn = Common.getConnection();
             String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
             pStmt = conn.prepareStatement(sql);
             pStmt.setString(1, member.getId());
-            pStmt.setString(2, member.getPassword()); // 해싱된 비밀번호를 저장
+
+            // 비밀번호를 해싱하여 저장
+            String hashedPassword = hashPassword(member.getPassword());
+            pStmt.setString(2, hashedPassword);
+
             pStmt.setString(3, member.getName());
             pStmt.setString(4, member.getEmail());
             pStmt.setString(5, member.getTel());
@@ -109,5 +122,34 @@ public class MemberDAO {
             Common.close(conn);
         }
     }
+    // MemberDAO 클래스에 findByUsername 메서드 추가
+    public MemberDTO findId(String id) {
+        try {
+            conn = Common.getConnection();
+            String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+            pStmt = conn.prepareStatement(sql);
+            pStmt.setString(1, id);
+            rs = pStmt.executeQuery();
+            if (rs.next()) {
+                MemberDTO member = new MemberDTO();
+                member.setId(rs.getString("ID"));
+                member.setPassword(rs.getString("PASSWORD"));
+                member.setName(rs.getString("NAME"));
+                member.setEmail(rs.getString("EMAIL"));
+                member.setTel(rs.getString("TEL"));
+                member.setCash(rs.getInt("CASH"));
+                return member;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Common.close(rs);
+            Common.close(pStmt);
+            Common.close(conn);
+        }
+        return null;
+    }
+
+
 
 }

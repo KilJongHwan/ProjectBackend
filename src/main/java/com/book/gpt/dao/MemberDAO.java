@@ -36,6 +36,7 @@ public class MemberDAO {
     }
 
     public boolean loginCheck(String id, String pwd) {
+        System.out.println(hashPassword(pwd));
         try {
             conn = Common.getConnection();
             String sql = "SELECT * FROM MEMBER WHERE ID = ?";

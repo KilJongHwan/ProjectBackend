@@ -5,24 +5,22 @@ import com.book.gpt.dto.ReviewDTO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
 
 public class ReviewDAO {
     private Connection conn = null;
-    private Statement stmt = null;
-    private ResultSet rs = null;
     private PreparedStatement pStmt = null;
+
     public boolean addReview(ReviewDTO review) {
         try {
             conn = Common.getConnection();
-            String sql = "INSERT INTO REVIEW (Review_ID, MEMBER_ID, BOOK_ID, PRICE, CREATION_DATE) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO REVIEW (REVIEW_ID, MEMBER_ID, BOOK_ID, RATING, CONTENT, CREATION_DATE) VALUES (?, ?, ?, ?, ?, ?)";
             pStmt = conn.prepareStatement(sql);
             pStmt.setInt(1, review.getReviewId());
             pStmt.setString(2, review.getMemberId());
             pStmt.setInt(3, review.getBookId());
-            pStmt.setDouble(4, review.getPrice());
-            pStmt.setDate(5, review.getCreationDate());
+            pStmt.setDouble(4, review.getRating());
+            pStmt.setString(5, review.getContent());
+            pStmt.setDate(6, review.getCreationDate());
 
             int rowsAffected = pStmt.executeUpdate();
 

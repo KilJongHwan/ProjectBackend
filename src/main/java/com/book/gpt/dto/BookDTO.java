@@ -1,5 +1,6 @@
 package com.book.gpt.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,8 +8,9 @@ import java.sql.Date;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class BookDTO {
-    private int bookNo;
+    private int id;
     private String title;
     private String author;
     private String publisher;
@@ -16,7 +18,7 @@ public class BookDTO {
     private String imageUrl;
     private String contentUrl;
     private String summary;
-    private double price;
+    private int price;
     private Date publishYear;
     private Date entry;
     private int purchaseCount;

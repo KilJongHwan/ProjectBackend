@@ -47,7 +47,8 @@ public class MemberDAO {
                 String sqlPwd = rs.getString("PASSWORD"); // 데이터베이스에서 해싱된 비밀번호를 가져옴
                 String hashedPwd = hashPassword(pwd); // 사용자 입력 비밀번호를 해싱
 
-                if (sqlPwd.equals(hashedPwd)) {
+                System.out.println(hashedPwd);
+                if (hashPassword(sqlPwd).equals(hashedPwd)) {
                     return true; // 해싱된 비밀번호와 입력한 비밀번호가 일치하면 로그인 성공
                 }
             }
@@ -150,6 +151,27 @@ public class MemberDAO {
         }
         return null;
     }
+    public String findRoleById(String id) {
+        try {
+            conn = Common.getConnection();
+            String sql = "SELECT AUTH FROM MEMBER WHERE ID = ?";
+            pStmt = conn.prepareStatement(sql);
+            pStmt.setString(1, id);
+            rs = pStmt.executeQuery();
+            if (rs.next()) {
+                int auth = rs.getInt("AUTH"); // 사용자의 권한 정보를 가져옴
+                return auth == 0 ? "USER" : "ADMIN"; // 권한 정보를 반환
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Common.close(rs);
+            Common.close(pStmt);
+            Common.close(conn);
+        }
+        return null;
+    }
+
 
 
 

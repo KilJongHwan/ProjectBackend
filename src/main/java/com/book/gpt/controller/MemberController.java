@@ -7,8 +7,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.SecretKey;
@@ -22,8 +25,15 @@ import java.util.Map;
 @RequestMapping("/users")
 public class MemberController {
 
+    @Value("${jwt.secret}") // application.properties에서 설정 가져오기
+    private String jwtSecretKey;
     @Autowired
     private JwtAuthorizationFilter jwtAuthorizationFilter;
+    @Autowired
+    private MemberDAO dao;   // Add this line
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;   // Add this line
 
     // 로그인
     @PostMapping("/login")
@@ -31,30 +41,39 @@ public class MemberController {
         String id = loginData.get("id");
         String pwd = loginData.get("password");
 
-        MemberDAO dao = new MemberDAO();
+        MemberDTO user = dao.findId(id);
+
 
         boolean loginResult = dao.loginCheck(id, pwd);
         System.out.println(loginResult);
         if (loginResult) {
             // 로그인 성공 시 토큰 생성
-            SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+            String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
 
-            String token = Jwts.builder()
-                    .setSubject(id)
-                    .signWith(key)
-                    .compact();
+            String token = jwtAuthorizationFilter.generateToken(id, role);
             // 클라이언트에게 토큰 반환
             return new ResponseEntity<>(token, HttpStatus.OK);
-        }
-        else {
+        } else {
             return new ResponseEntity<>("", HttpStatus.OK);
         }
     }
 
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> memberLogout(HttpServletRequest request) {
+        String token = jwtAuthorizationFilter.extractTokenFromRequest(request);
+
+        if (token != null) {
+            return new ResponseEntity<>("Logged out successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("User is not logged in", HttpStatus.OK);
+        }
+    }
+
+
+
     @PostMapping("/signup")
     public ResponseEntity<Boolean> memberSignup(@RequestBody MemberDTO memberDTO) {
-        MemberDAO dao = new MemberDAO();
         boolean regResult = false;
 
         // 비밀번호를 해싱해서 저장
@@ -72,24 +91,50 @@ public class MemberController {
         return new ResponseEntity<>(regResult, HttpStatus.OK);
 
     }
-    @GetMapping("/check-login")
-    public ResponseEntity<String> checkLogin(HttpServletRequest request) {
-        try {
-            // JWTAuthorizationFilter에서 사용한 방식과 동일한 방식으로 토큰을 추출
-            String token = jwtAuthorizationFilter.extractTokenFromRequest(request);
 
-            if (token != null) {
-                // 토큰이 유효하다면 로그인 상태
-                System.out.println("로그인이 된 상태입니다..");
-                return new ResponseEntity<>("User is logged in", HttpStatus.OK);
-            } else {
-                // 토큰이 없거나 유효하지 않다면 비로그인 상태
-                System.out.println("로그인이 필요 합니다");
-                return new ResponseEntity<>("User is not logged in", HttpStatus.OK);
+    @GetMapping("/check-login")
+    public ResponseEntity<String> checkLogin(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            // 클라이언트에서 전송한 Authorization 헤더에서 토큰을 추출
+            String clientToken = authorizationHeader.substring("Bearer ".length());
+            System.out.println(clientToken);
+            if (clientToken != null) {
+                // 백엔드에서 생성한 토큰과 클라이언트 토큰을 비교하여 유효한 토큰인지 확인
+                if (isValidToken(clientToken)) {
+                    // 토큰이 유효하다면 로그인 상태
+                    System.out.println("로그인이 된 상태입니다..");
+                    return new ResponseEntity<>("User is logged in", HttpStatus.OK);
+                }
             }
+
+            // 토큰이 없거나 유효하지 않다면 비로그인 상태
+            System.out.println("로그인이 필요합니다");
+            return new ResponseEntity<>("User is not logged in", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    private boolean isValidToken(String clientToken) {
+        try {
+            if (!isValidFormat(clientToken)) {
+                return false;
+            }
+            // 백엔드에서 사용한 비밀키를 사용하여 토큰을 검증
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
+            System.out.println(key);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(clientToken);
+
+            return true; // 토큰이 유효하면 true 반환
+        } catch (Exception e) {
+            return false; // 토큰이 유효하지 않으면 false 반환
+        }
+    }
+    public boolean isValidFormat(String token) {
+        String[] parts = token.split("\\.");
+        return parts.length == 3;
     }
 
 }

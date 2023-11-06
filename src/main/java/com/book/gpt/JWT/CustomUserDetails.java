@@ -20,8 +20,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        String roleWithPrefix = "ROLE_" + role;
         // 사용자의 역할을 반환
-        return Collections.singleton(() -> role);
+        return Collections.singleton(() -> roleWithPrefix);
     }
 
     @Override

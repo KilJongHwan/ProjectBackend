@@ -11,6 +11,7 @@ public class ReviewDTO {
     private int reviewId;
     private String memberId;
     private int bookId;
-    private double price;
+    private double rating;
+    private String content;
     private Date creationDate;
 }

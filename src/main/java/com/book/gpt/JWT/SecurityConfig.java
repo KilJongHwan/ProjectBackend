@@ -5,6 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -21,8 +22,11 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 @Lazy
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
@@ -66,12 +70,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class) // JwtAuthorizationFilter를 UsernamePasswordAuthenticationFilter 전에 추가
                 .authorizeRequests()
                 .antMatchers("/public/**").permitAll() // 모든 사용자에게 접근 허용
-                .antMatchers("/users/login").permitAll() // 로그인 엔드포인트 허용
+                .antMatchers("/users/login").permitAll()// 로그인 엔드포인트 허용
+                .antMatchers("/users/logout").permitAll() // 로그아웃 엔드포인트 허용
                 .antMatchers("/users/check-login").permitAll() // 로그인 엔드포인트 허용
                 .antMatchers("/users/signup").permitAll() // 로그인 엔드포인트 허용
+                .antMatchers("/purchase/review").hasRole("USER") // 수정된 부분
                 .antMatchers("/api//send-email").permitAll() // 이메일 엔드포인트 허용
                 .antMatchers("/api//verify-email").permitAll() // 이메일 엔드포인트 허용
                 .antMatchers("/users/**").hasRole("USER") // USER 권한을 가진 사용자만 접근 허용
+                .antMatchers("/purchase/**").hasRole("USER")
                 .antMatchers("/admin/**").hasRole("ADMIN") // ADMIN 권한을 가진 사용자만 접근 허용
                 .anyRequest().authenticated(); // 다른 모든 요청은 인증이 필요
     }

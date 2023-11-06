@@ -15,7 +15,8 @@ public class MemberDTO {
     private String email;
     private String tel;
     private int cash;
-    private boolean isAdmin;
+    private int auth;
     private Collection<? extends GrantedAuthority> authorities; // 권한 정보
+    private String role;
 
 }

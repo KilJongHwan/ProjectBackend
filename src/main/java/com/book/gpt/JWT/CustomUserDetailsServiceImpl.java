@@ -13,7 +13,6 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
     private MemberDAO memberDAO;
     @Override
     public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
-//        MemberDAO memberDAO = new MemberDAO();
         MemberDTO user = memberDAO.findId(id);
 
         if (user != null) {

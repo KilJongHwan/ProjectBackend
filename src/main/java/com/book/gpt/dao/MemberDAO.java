@@ -140,6 +140,8 @@ public class MemberDAO {
                 member.setEmail(rs.getString("EMAIL"));
                 member.setTel(rs.getString("TEL"));
                 member.setCash(rs.getInt("CASH"));
+                String role = findRoleById(id);
+                member.setRole(role);
                 return member;
             }
         } catch (Exception e) {

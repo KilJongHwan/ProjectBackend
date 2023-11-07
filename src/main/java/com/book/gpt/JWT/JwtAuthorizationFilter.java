@@ -39,27 +39,6 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
     private UserDetailsService userDetailsService; // UserDetailsService 주입
 
 
-//    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-//        try {
-//            String token = extractTokenFromRequest(request);
-//
-//            if (token != null) {
-//                UserDetails userDetails = validateToken(token);
-//
-//                JwtAuthentication jwtAuthentication = new JwtAuthentication(userDetails.getUsername());
-//                Authentication authentication = new UsernamePasswordAuthenticationToken(jwtAuthentication, null, jwtAuthentication.getAuthorities());
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-//            }
-//            chain.doFilter(request, response);
-//
-//        } catch (Exception e) {
-//            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-//            return;
-//        }
-//
-//        chain.doFilter(request, response);
-//    }
-
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         try {
             String token = extractTokenFromRequest(request);
@@ -134,4 +113,9 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
 
         return userDetailsService.loadUserByUsername(username); // 사용자 정보를 UserDetailsService를 통해 가져옴
     }
+    public String getIdFromToken(String token) {
+        Claims claims = Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(token).getBody();
+        return claims.getSubject();
+    }
+
 }

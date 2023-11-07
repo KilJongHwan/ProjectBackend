@@ -74,11 +74,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/users/logout").permitAll() // 로그아웃 엔드포인트 허용
                 .antMatchers("/users/check-login").permitAll() // 로그인 엔드포인트 허용
                 .antMatchers("/users/signup").permitAll() // 로그인 엔드포인트 허용
-                .antMatchers("/purchase/review").hasRole("USER") // 수정된 부분
                 .antMatchers("/api//send-email").permitAll() // 이메일 엔드포인트 허용
                 .antMatchers("/api//verify-email").permitAll() // 이메일 엔드포인트 허용
+                .antMatchers("/purchase/review").permitAll() // 수정된 부분
+                .antMatchers("/purchase/**").permitAll()
                 .antMatchers("/users/**").hasRole("USER") // USER 권한을 가진 사용자만 접근 허용
-                .antMatchers("/purchase/**").hasRole("USER")
                 .antMatchers("/admin/**").hasRole("ADMIN") // ADMIN 권한을 가진 사용자만 접근 허용
                 .anyRequest().authenticated(); // 다른 모든 요청은 인증이 필요
     }

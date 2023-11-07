@@ -14,4 +14,8 @@ public class ReviewDTO {
     private double rating;
     private String content;
     private Date creationDate;
+    private String memberName;
+
+    private double averageRating; // 평균 평점
+    private int totalReviews; // 리뷰의 총 개수
 }

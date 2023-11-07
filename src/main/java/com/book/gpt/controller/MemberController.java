@@ -93,55 +93,32 @@ public class MemberController {
 
     }
 
+
+
     @GetMapping("/check-login")
-    public ResponseEntity<String> checkLogin(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<Map<String, Object>> checkLogin(@RequestHeader("Authorization") String authorizationHeader) {
         try {
             // 클라이언트에서 전송한 Authorization 헤더에서 토큰을 추출
             String clientToken = authorizationHeader.substring("Bearer ".length());
-            System.out.println(clientToken);
             if (clientToken != null) {
-                String id = jwtAuthorizationFilter.getIdFromToken(clientToken); // 토큰에서 사용자 ID 추출
-                MemberDTO user = dao.findId(id); // 사용자 정보 조회
                 // 백엔드에서 생성한 토큰과 클라이언트 토큰을 비교하여 유효한 토큰인지 확인
                 if (isValidToken(clientToken)) {
                     // 토큰이 유효하다면 로그인 상태
-                    System.out.println("로그인이 된 상태입니다..");
-                    return new ResponseEntity<>("User is logged in", HttpStatus.OK);
+                    String id = jwtAuthorizationFilter.getIdFromToken(clientToken); // 토큰에서 사용자 ID 추출
+                    MemberDTO user = dao.findId(id); // 사용자 정보 조회
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "User is logged in");
+                    response.put("user", user);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
                 }
             }
 
             // 토큰이 없거나 유효하지 않다면 비로그인 상태
-            System.out.println("로그인이 필요합니다");
-            return new ResponseEntity<>("User is not logged in", HttpStatus.OK);
+            return new ResponseEntity<>(Collections.singletonMap("message", "User is not logged in"), HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Collections.singletonMap("message", "Error occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-//    @GetMapping("/check-login")
-//    public ResponseEntity<Map<String, Object>> checkLogin(@RequestHeader("Authorization") String authorizationHeader) {
-//        try {
-//            // 클라이언트에서 전송한 Authorization 헤더에서 토큰을 추출
-//            String clientToken = authorizationHeader.substring("Bearer ".length());
-//            if (clientToken != null) {
-//                // 백엔드에서 생성한 토큰과 클라이언트 토큰을 비교하여 유효한 토큰인지 확인
-//                if (isValidToken(clientToken)) {
-//                    // 토큰이 유효하다면 로그인 상태
-//                    String id = jwtAuthorizationFilter.getIdFromToken(clientToken); // 토큰에서 사용자 ID 추출
-//                    MemberDTO user = dao.findId(id); // 사용자 정보 조회
-//                    Map<String, Object> response = new HashMap<>();
-//                    response.put("message", "User is logged in");
-//                    response.put("user", user);
-//                    return new ResponseEntity<>(response, HttpStatus.OK);
-//                }
-//            }
-//
-//            // 토큰이 없거나 유효하지 않다면 비로그인 상태
-//            return new ResponseEntity<>(Collections.singletonMap("message", "User is not logged in"), HttpStatus.OK);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>(Collections.singletonMap("message", "Error occurred"), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 
 
     private boolean isValidToken(String clientToken) {

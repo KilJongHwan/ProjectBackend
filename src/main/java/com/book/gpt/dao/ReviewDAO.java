@@ -46,7 +46,7 @@ public class ReviewDAO {
         List<ReviewDTO> list = new ArrayList<>();
         try {
             conn = Common.getConnection();
-            String sql = "SELECT * FROM REVIEW WHERE BOOK_ID = ?";
+            String sql = "SELECT R.*, M.ID as MEMBER_ID, M.NAME as MEMBER_NAME FROM REVIEW R INNER JOIN MEMBER M ON R.MEMBER_ID = M.ID WHERE R.BOOK_ID = ?";
             pStmt = conn.prepareStatement(sql);
             pStmt.setInt(1, bookId);
             rs = pStmt.executeQuery();
@@ -54,6 +54,7 @@ public class ReviewDAO {
             while (rs.next()) {
                 ReviewDTO review = new ReviewDTO();
                 review.setMemberId(rs.getString("MEMBER_ID"));
+                review.setMemberName(rs.getString("MEMBER_NAME")); // 멤버 이름을 설정
                 review.setBookId(rs.getInt("BOOK_ID"));
                 review.setRating(rs.getDouble("RATING"));
                 review.setContent(rs.getString("CONTENT"));
@@ -68,5 +69,27 @@ public class ReviewDAO {
             Common.close(conn);
         }
         return list;
+    }
+
+    public ReviewDTO getReviewStats(int bookId) {
+        ReviewDTO reviewStats = new ReviewDTO();
+        try {
+            conn = Common.getConnection();
+            String sql = "SELECT AVG(rating) AS average_rating, COUNT(*) AS total_reviews FROM REVIEW WHERE book_id = ?";
+            pStmt = conn.prepareStatement(sql);
+            pStmt.setInt(1, bookId);
+            rs = pStmt.executeQuery();
+            if (rs.next()) {
+                reviewStats.setAverageRating(rs.getDouble("average_rating"));
+                reviewStats.setTotalReviews(rs.getInt("total_reviews"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Common.close(rs);
+            Common.close(pStmt);
+            Common.close(conn);
+        }
+        return reviewStats;
     }
 }

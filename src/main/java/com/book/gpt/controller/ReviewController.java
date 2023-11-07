@@ -21,6 +21,7 @@ public class ReviewController {
     @PostMapping("/review")
     public ResponseEntity<ReviewDTO> addReview(@RequestBody ReviewDTO review) {
         ReviewDTO createdReview = reviewDAO.addReview(review);
+        System.out.println(createdReview);
         if (createdReview != null) {
             return new ResponseEntity<>(createdReview, HttpStatus.CREATED);
         } else {
@@ -33,6 +34,16 @@ public class ReviewController {
         List<ReviewDTO> reviews = reviewDAO.getReviews(bookid);
         if (reviews != null && !reviews.isEmpty()) {
             return new ResponseEntity<>(reviews, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/reviewdata/stats/{bookid}")
+    public ResponseEntity<ReviewDTO> getReviewStats(@PathVariable int bookid) {
+        ReviewDTO stats = reviewDAO.getReviewStats(bookid);
+        if (stats.getAverageRating() != 0 || stats.getTotalReviews() != 0) {
+            return new ResponseEntity<>(stats, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

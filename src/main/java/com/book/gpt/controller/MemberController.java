@@ -40,7 +40,7 @@ public class MemberController {
         String id = loginData.get("id");
         String pwd = loginData.get("password");
 
-        MemberDTO user = dao.findId(id);
+//        MemberDTO user = dao.findId(id);
 
 
         boolean loginResult = dao.loginCheck(id, pwd);

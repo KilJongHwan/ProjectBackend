@@ -9,11 +9,11 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.List;
 import java.util.Objects;
 
 
 @Repository
-
 public class MemberDAO {
     private final JdbcTemplate jdbcTemplate;
     @Autowired
@@ -36,26 +36,38 @@ public class MemberDAO {
         }
     }
 
-    public boolean loginCheck(String id, String pwd) {
-        System.out.println(hashPassword(pwd));
-        String sql = "SELECT * FROM MEMBER WHERE ID = ?";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
-            String sqlPwd = rs.getString("PASSWORD");
-            String hashedPwd = hashPassword(pwd);
-            System.out.println(hashedPwd);
-            return hashPassword(sqlPwd).equals(hashedPwd);
-        }));
+    public boolean loginCheck(String id, String hashedPwd) {
+        String sql = "SELECT PASSWORD FROM MEMBER WHERE ID = ?";
+        List<String> results = jdbcTemplate.query(sql, new Object[]{id}, (rs, rowNum) -> rs.getString("PASSWORD"));
+
+        if (results.isEmpty()) {
+            return false;
+        }
+
+        String sqlPwd = results.get(0);
+
+        return hashedPwd.equals(sqlPwd);
     }
+
 
     public boolean signupCheck(String id, String email, String phone) {
         String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR TEL = ?";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, new Object[]{id, email, phone}, (rs, rowNum) -> !rs.next()));
+        List<MemberDTO> results = jdbcTemplate.query(sql, new Object[]{id, email, phone}, (rs, rowNum) -> {
+            MemberDTO member = new MemberDTO();
+            member.setId(rs.getString("ID"));
+            member.setEmail(rs.getString("EMAIL"));
+            member.setTel(rs.getString("TEL"));
+            return member;
+        });
+        return results.isEmpty();
     }
 
     public boolean signup(MemberDTO member) {
-        String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
-        return jdbcTemplate.update(sql, member.getId(), hashPassword(member.getPassword()), member.getName(), member.getEmail(), member.getTel(), member.getCash()) > 0;
+        String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH, PROFILE_URL) VALUES(?, ?, ?, ?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, member.getId(), member.getPassword(), member.getName(), member.getEmail(), member.getTel(), member.getCash(), member.getProfileUrl()) > 0;
     }
+
+
 
     public MemberDTO findId(String id) {
         String sql = "SELECT * FROM MEMBER WHERE ID = ?";

@@ -76,11 +76,15 @@ public class MemberController {
         boolean regResult = false;
 
         // 비밀번호를 해싱해서 저장
-        String plainPassword = memberDTO.getPassword();
-        memberDTO.setPassword(plainPassword);
+        String plainPassword =  memberDTO.getPassword();
+        memberDTO.setPassword(dao.hashPassword(plainPassword)); // 해싱된 비밀번호를 저장
+
 
         if (dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel())) {
             // 회원 가입을 수행
+            memberDTO.setName("user");
+            memberDTO.setCash(0);
+            memberDTO.getProfileUrl();
             regResult = dao.signup(memberDTO);
             memberDTO.setRole("ROLE_USER");
             System.out.println(memberDTO.getRole());

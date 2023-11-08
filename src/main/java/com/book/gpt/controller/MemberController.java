@@ -4,11 +4,9 @@ import com.book.gpt.JWT.JwtAuthorizationFilter;
 import com.book.gpt.dao.MemberDAO;
 import com.book.gpt.dto.MemberDTO;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,7 +48,7 @@ public class MemberController {
         if (loginResult) {
             // 로그인 성공 시 토큰 생성
             String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
-
+            System.out.println(role);
             String token = jwtAuthorizationFilter.generateToken(id, role);
             // 클라이언트에게 토큰 반환
             return new ResponseEntity<>(token, HttpStatus.OK);
@@ -84,7 +82,8 @@ public class MemberController {
         if (dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel())) {
             // 회원 가입을 수행
             regResult = dao.signup(memberDTO);
-            System.out.println("회원가입");
+            memberDTO.setRole("ROLE_USER");
+            System.out.println(memberDTO.getRole());
         } else {
             System.out.println("중복된 아이디, 이메일, 전화 번호가 존재합니다 ");
         }

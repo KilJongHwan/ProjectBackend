@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // Spring Boot의 경우
@@ -35,7 +36,7 @@ public class ReviewController {
         if (reviews != null && !reviews.isEmpty()) {
             return new ResponseEntity<>(reviews, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK); // 빈 리스트와 HttpStatus.OK 반환
         }
     }
 
@@ -45,7 +46,11 @@ public class ReviewController {
         if (stats.getAverageRating() != 0 || stats.getTotalReviews() != 0) {
             return new ResponseEntity<>(stats, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            // 새로운 ReviewDTO 객체 생성하여 초기화 후 반환
+            ReviewDTO emptyStats = new ReviewDTO();
+            emptyStats.setAverageRating(0);
+            emptyStats.setTotalReviews(0);
+            return new ResponseEntity<>(emptyStats, HttpStatus.OK);
         }
     }
 

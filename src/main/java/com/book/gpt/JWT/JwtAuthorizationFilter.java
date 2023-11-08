@@ -83,7 +83,7 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
 
         return Jwts.builder()
                 .setSubject(username)
-                .claim("role", role) // 사용자의 권한 정보를 토큰에
+                .claim("role", role)  // 사용자의 권한 정보를 토큰에
                 .setIssuedAt(now)
                 .setExpiration(expirationDate)
                 .signWith(key)

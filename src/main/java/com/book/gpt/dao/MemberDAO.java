@@ -1,24 +1,25 @@
 package com.book.gpt.dao;
 
-import com.book.gpt.common.Common;
 import com.book.gpt.dto.MemberDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.Objects;
 
 
 @Repository
 
 public class MemberDAO {
-    private Connection conn = null;
-    private Statement stmt = null;
-    private ResultSet rs = null;
-    private PreparedStatement pStmt = null;
+    private final JdbcTemplate jdbcTemplate;
+    @Autowired
+    public MemberDAO(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
 
     public String hashPassword(String password) {
         try {
@@ -37,144 +38,52 @@ public class MemberDAO {
 
     public boolean loginCheck(String id, String pwd) {
         System.out.println(hashPassword(pwd));
-        try {
-            conn = Common.getConnection();
-            String sql = "SELECT * FROM MEMBER WHERE ID = ?";
-            pStmt = conn.prepareStatement(sql);
-            pStmt.setString(1, id);
-            rs = pStmt.executeQuery();
-            if (rs.next()) {
-                String sqlPwd = rs.getString("PASSWORD"); // 데이터베이스에서 해싱된 비밀번호를 가져옴
-                String hashedPwd = hashPassword(pwd); // 사용자 입력 비밀번호를 해싱
-
-                System.out.println(hashedPwd);
-                if (hashPassword(sqlPwd).equals(hashedPwd)) {
-                    return true; // 해싱된 비밀번호와 입력한 비밀번호가 일치하면 로그인 성공
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            Common.close(rs);
-            Common.close(pStmt);
-            Common.close(conn);
-        }
-        return false;
+        String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
+            String sqlPwd = rs.getString("PASSWORD");
+            String hashedPwd = hashPassword(pwd);
+            System.out.println(hashedPwd);
+            return hashPassword(sqlPwd).equals(hashedPwd);
+        }));
     }
 
-
-
-    // 중복값 체크 메서드
     public boolean signupCheck(String id, String email, String phone) {
-        try {
-            conn = Common.getConnection();
-            String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR TEL = ?";
-            pStmt = conn.prepareStatement(sql);
-            pStmt.setString(1, id);
-            pStmt.setString(2, email);
-            pStmt.setString(3, phone);
-            rs = pStmt.executeQuery();
-
-            if (rs.next()) {
-                // 아이디, 이메일 또는 전화번호 중 하나라도 중복되는 경우
-                Common.close(rs);
-                Common.close(pStmt);
-                Common.close(conn);
-                return false;
-            } else {
-                // 중복되는 정보가 없는 경우
-                Common.close(rs);
-                Common.close(pStmt);
-                Common.close(conn);
-
-                return true;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        String sql = "SELECT * FROM MEMBER WHERE ID = ? OR EMAIL = ? OR TEL = ?";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, new Object[]{id, email, phone}, (rs, rowNum) -> !rs.next()));
     }
 
-    // 회원가입 완료 메서드
-    // 회원가입 완료 메서드
     public boolean signup(MemberDTO member) {
-        try {
-            conn = Common.getConnection();
-            String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
-            pStmt = conn.prepareStatement(sql);
-            pStmt.setString(1, member.getId());
-
-            // 비밀번호를 해싱하여 저장
-            String hashedPassword = hashPassword(member.getPassword());
-            pStmt.setString(2, hashedPassword);
-
-            pStmt.setString(3, member.getName());
-            pStmt.setString(4, member.getEmail());
-            pStmt.setString(5, member.getTel());
-            pStmt.setInt(6, member.getCash());
-
-            int rowsAffected = pStmt.executeUpdate();
-
-            return rowsAffected > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            Common.close(pStmt);
-            Common.close(conn);
-        }
+        String sql = "INSERT INTO MEMBER(ID, PASSWORD, NAME, EMAIL, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, member.getId(), hashPassword(member.getPassword()), member.getName(), member.getEmail(), member.getTel(), member.getCash()) > 0;
     }
-    // MemberDAO 클래스에 findByUsername 메서드 추가
+
     public MemberDTO findId(String id) {
-        try {
-            conn = Common.getConnection();
-            String sql = "SELECT * FROM MEMBER WHERE ID = ?";
-            pStmt = conn.prepareStatement(sql);
-            pStmt.setString(1, id);
-            rs = pStmt.executeQuery();
-            if (rs.next()) {
-                MemberDTO member = new MemberDTO();
-                member.setId(rs.getString("ID"));
-                member.setPassword(rs.getString("PASSWORD"));
-                member.setName(rs.getString("NAME"));
-                member.setEmail(rs.getString("EMAIL"));
-                member.setTel(rs.getString("TEL"));
-                member.setCash(rs.getInt("CASH"));
-                String role = findRoleById(id);
-                member.setRole(role);
-                return member;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            Common.close(rs);
-            Common.close(pStmt);
-            Common.close(conn);
-        }
-        return null;
+        String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
     }
+
+    private RowMapper<MemberDTO> memberRowMapper() {
+        return (rs, rowNum) -> {
+            MemberDTO member = new MemberDTO();
+            member.setId(rs.getString("ID"));
+            member.setPassword(rs.getString("PASSWORD"));
+            member.setName(rs.getString("NAME"));
+            member.setEmail(rs.getString("EMAIL"));
+            member.setTel(rs.getString("TEL"));
+            member.setCash(rs.getInt("CASH"));
+            String role = findRoleById(rs.getString("ID"));
+            member.setRole(role);
+            return member;
+        };
+    }
+
     public String findRoleById(String id) {
-        try {
-            conn = Common.getConnection();
-            String sql = "SELECT AUTH FROM MEMBER WHERE ID = ?";
-            pStmt = conn.prepareStatement(sql);
-            pStmt.setString(1, id);
-            rs = pStmt.executeQuery();
-            if (rs.next()) {
-                int auth = rs.getInt("AUTH"); // 사용자의 권한 정보를 가져옴
-                return auth == 0 ? "USER" : "ADMIN"; // 권한 정보를 반환
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            Common.close(rs);
-            Common.close(pStmt);
-            Common.close(conn);
-        }
-        return null;
+        String sql = "SELECT AUTH FROM MEMBER WHERE ID = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
+            String auth = rs.getString("AUTH");
+            System.out.println(auth);
+            return Objects.equals(auth, "0") ? "ROLE_USER" : "ROLE_ADMIN";
+        });
     }
-
-
-
 
 }

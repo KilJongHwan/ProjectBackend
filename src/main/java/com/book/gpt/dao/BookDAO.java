@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -13,6 +14,10 @@ import java.sql.SQLException;
 public class BookDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    public BookDAO(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
 
     public BookDTO getBookInfo(int bookId) {
         String sql = "SELECT * FROM Book WHERE ID = ?";

@@ -30,9 +30,9 @@ public class CartController {
     }
 
     // 장바구니 아이템 제거
-    @DeleteMapping("/{cartId}")
-    public ResponseEntity<Void> removeFromCart(@PathVariable int cartId) {
-        cartDAO.removeFromCart(cartId);
+    @DeleteMapping("/{memberId}/{bookId}")
+    public ResponseEntity<Void> removeFromCart(@PathVariable String memberId, @PathVariable int bookId) {
+        cartDAO.removeFromCart(memberId, bookId);
         return ResponseEntity.ok().build();
     }
 }

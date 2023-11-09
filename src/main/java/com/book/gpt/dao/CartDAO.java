@@ -37,8 +37,9 @@ public class CartDAO {
     }
 
     // 장바구니 아이템 제거
-    public void removeFromCart(int cartId) {
-        String sql = "DELETE FROM Cart WHERE CART_ID = ?";
-        jdbcTemplate.update(sql, cartId);
+    public void removeFromCart(String memberId, int bookId) {
+        String sql = "DELETE FROM Cart WHERE MEMBER_ID = ? AND BOOK_ID = ?";
+        jdbcTemplate.update(sql, memberId, bookId);
     }
+
 }

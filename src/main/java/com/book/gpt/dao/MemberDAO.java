@@ -88,6 +88,10 @@ public class MemberDAO {
             return member;
         };
     }
+    public MemberDTO getUserInfo(String id) {
+        String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
+    }
 
     public String findRoleById(String id) {
         String sql = "SELECT AUTH FROM MEMBER WHERE ID = ?";

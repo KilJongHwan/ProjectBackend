@@ -69,33 +69,39 @@ public class MemberController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberDTO> getUserInfo(@PathVariable("id") String id) {
+        MemberDTO userInfo = dao.getUserInfo(id);
+        return new ResponseEntity<>(userInfo, HttpStatus.OK);
+    }
 
+    @PostMapping("/signup/check-duplicate")
+    public ResponseEntity<Boolean> checkDuplicate(@RequestBody MemberDTO memberDTO) {
+        boolean isDuplicate = dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel());
+
+        if (isDuplicate) {
+            System.out.println("중복된 아이디, 이메일, 전화 번호가 존재합니다 ");
+        }
+
+        return new ResponseEntity<>(!isDuplicate, HttpStatus.OK);
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<Boolean> memberSignup(@RequestBody MemberDTO memberDTO) {
-        boolean regResult = false;
-
         // 비밀번호를 해싱해서 저장
         String plainPassword =  memberDTO.getPassword();
         memberDTO.setPassword(dao.hashPassword(plainPassword)); // 해싱된 비밀번호를 저장
 
-
-        if (dao.signupCheck(memberDTO.getId(), memberDTO.getEmail(), memberDTO.getTel())) {
-            // 회원 가입을 수행
-            memberDTO.setName("user");
-            memberDTO.setCash(0);
-            memberDTO.getProfileUrl();
-            regResult = dao.signup(memberDTO);
-            memberDTO.setRole("ROLE_USER");
-            System.out.println(memberDTO.getRole());
-        } else {
-            System.out.println("중복된 아이디, 이메일, 전화 번호가 존재합니다 ");
-        }
+        // 회원 가입을 수행
+        memberDTO.setName("user");
+        memberDTO.setCash(0);
+        memberDTO.getProfileUrl();
+        boolean regResult = dao.signup(memberDTO);
+        memberDTO.setRole("ROLE_USER");
+        System.out.println(memberDTO.getRole());
 
         return new ResponseEntity<>(regResult, HttpStatus.OK);
-
     }
-
 
 
     @GetMapping("/check-login")

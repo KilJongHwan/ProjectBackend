@@ -101,5 +101,20 @@ public class MemberDAO {
             return Objects.equals(auth, "0") ? "ROLE_USER" : "ROLE_ADMIN";
         });
     }
+    public boolean kakaoSignupCheck(String kakaoNickname) {
+        String sql = "SELECT * FROM MEMBER WHERE ID = ?";
+        List<MemberDTO> results = jdbcTemplate.query(sql, new Object[]{kakaoNickname}, (rs, rowNum) -> {
+            MemberDTO member = new MemberDTO();
+            member.setId(rs.getString("ID"));
+            return member;
+        });
+        return results.isEmpty();
+    }
+
+    public boolean kakaoSignup(MemberDTO member) {
+        String sql = "INSERT INTO MEMBER(ID, NAME, EMAIL, PASSWORD, TEL, CASH) VALUES(?, ?, ?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, member.getId(), "user", "user.kakao.com", "abc", "010-0000-0000", 0) > 0;
+    }
+
 
 }

@@ -5,12 +5,13 @@ import com.book.gpt.dao.MemberDAO;
 import com.book.gpt.dto.MemberDTO;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.crypto.SecretKey;
 import javax.servlet.http.HttpServletRequest;
@@ -152,5 +153,49 @@ public class MemberController {
         String[] parts = token.split("\\.");
         return parts.length == 3;
     }
+    @PostMapping("/kakao-login")
+    public ResponseEntity<String> kakaoLogin(@RequestBody Map<String, Object> kakaoData) {
+        // 카카오 토큰 추출
+        String kakaoToken = (String) kakaoData.get("access_token");
+
+        // Check if 'access_token' is provided
+        if (kakaoToken == null || kakaoToken.isEmpty()) {
+            return new ResponseEntity<>("Invalid or missing Kakao token", HttpStatus.BAD_REQUEST);
+        }
+
+        // 카카오 사용자 정보 조회
+        String kakaoUserInfo = requestKakaoUserInfo(kakaoToken);
+
+        // JSON 파싱
+        JSONObject jsonObject = new JSONObject(kakaoUserInfo);
+        String kakaoId = jsonObject.get("id").toString();
+        String kakaoNickname = jsonObject.getJSONObject("kakao_account").getJSONObject("profile").get("nickname").toString();
+
+        // 회원 정보 조회 및 처리
+        if (dao.kakaoSignupCheck(kakaoNickname)) {
+            // 카카오 닉네임이 이미 가입되어 있는 경우, 로그인 처리
+            String token = jwtAuthorizationFilter.generateToken(kakaoNickname, "ROLE_USER");
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        } else {
+            // 카카오 닉네임이 가입되어 있지 않은 경우, 회원 가입 후 로그인 처리
+            MemberDTO member = new MemberDTO();
+            member.setId(kakaoNickname);
+            dao.kakaoSignup(member);
+            String token = jwtAuthorizationFilter.generateToken(kakaoNickname, "ROLE_USER");
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        }
+    }
+
+    private String requestKakaoUserInfo(String kakaoToken) {
+        final String requestUrl = "https://kapi.kakao.com/v2/user/me";
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + kakaoToken);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        System.out.println("Kakao API Response: " + responseEntity.getBody());
+        return responseEntity.getBody();
+    }
+
+
 
 }

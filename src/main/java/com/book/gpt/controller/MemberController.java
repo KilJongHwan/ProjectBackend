@@ -41,8 +41,7 @@ public class MemberController {
         String id = loginData.get("id");
         String pwd = loginData.get("password");
 
-//        MemberDTO user = dao.findId(id);
-
+//        MemberDTO user = dao.findId(id
 
         boolean loginResult = dao.loginCheck(id, pwd);
         System.out.println(loginResult);
@@ -50,6 +49,8 @@ public class MemberController {
             // 로그인 성공 시 토큰 생성
             String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
             System.out.println(role);
+            MemberDTO user = dao.findId(id); // 사용자 정보 조회
+            user.setLoginType("general"); // 로그인 타입 설정
             String token = jwtAuthorizationFilter.generateToken(id, role);
             // 클라이언트에게 토큰 반환
             return new ResponseEntity<>(token, HttpStatus.OK);
@@ -153,6 +154,22 @@ public class MemberController {
         String[] parts = token.split("\\.");
         return parts.length == 3;
     }
+    @GetMapping("/check-kakao-login")
+    public ResponseEntity<String> checkKakaoLogin(@RequestHeader("Authorization") String authorizationHeader) {
+        String token = authorizationHeader.substring("Bearer ".length());
+        final String requestUrl = "https://kapi.kakao.com/v1/user/access_token_info";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+        if(responseEntity.getStatusCode() == HttpStatus.OK) {
+            return new ResponseEntity<>("User is logged in with Kakao", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("User is not logged in with Kakao", HttpStatus.UNAUTHORIZED);
+        }
+    }
     @PostMapping("/kakao-login")
     public ResponseEntity<String> kakaoLogin(@RequestBody Map<String, Object> kakaoData) {
         // 카카오 토큰 추출
@@ -169,21 +186,22 @@ public class MemberController {
         // JSON 파싱
         JSONObject jsonObject = new JSONObject(kakaoUserInfo);
         String kakaoId = jsonObject.get("id").toString();
-        String kakaoNickname = jsonObject.getJSONObject("kakao_account").getJSONObject("profile").get("nickname").toString();
+        String kakaoNickname = jsonObject.getJSONObject("properties").get("nickname").toString();
 
         // 회원 정보 조회 및 처리
-        if (dao.kakaoSignupCheck(kakaoNickname)) {
-            // 카카오 닉네임이 이미 가입되어 있는 경우, 로그인 처리
-            String token = jwtAuthorizationFilter.generateToken(kakaoNickname, "ROLE_USER");
-            return new ResponseEntity<>(token, HttpStatus.OK);
-        } else {
+        if (!dao.kakaoSignupCheck(kakaoNickname)) {
             // 카카오 닉네임이 가입되어 있지 않은 경우, 회원 가입 후 로그인 처리
+            System.out.println(kakaoNickname);
             MemberDTO member = new MemberDTO();
             member.setId(kakaoNickname);
             dao.kakaoSignup(member);
-            String token = jwtAuthorizationFilter.generateToken(kakaoNickname, "ROLE_USER");
-            return new ResponseEntity<>(token, HttpStatus.OK);
         }
+
+        // 카카오 닉네임이 이미 가입되어 있는 경우(또는 방금 가입한 경우), 로그인 처리
+        MemberDTO user = dao.findId(kakaoNickname); // 사용자 정보 조회
+        user.setLoginType("kakao"); // 로그인 타입 설정
+        String token = jwtAuthorizationFilter.generateToken(kakaoNickname, "ROLE_USER");
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
     private String requestKakaoUserInfo(String kakaoToken) {

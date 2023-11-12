@@ -108,7 +108,7 @@ public class MemberDAO {
             member.setId(rs.getString("ID"));
             return member;
         });
-        return results.isEmpty();
+        return !results.isEmpty();
     }
 
     public boolean kakaoSignup(MemberDTO member) {

@@ -66,19 +66,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         JwtAuthorizationFilter jwtAuthorizationFilter = applicationContext.getBean(JwtAuthorizationFilter.class);
+
         http.cors().and().csrf().disable()
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class) // JwtAuthorizationFilter를 UsernamePasswordAuthenticationFilter 전에 추가
                 .authorizeRequests()
                 .antMatchers("/public/**").permitAll() // 모든 사용자에게 접근 허용
-                .antMatchers("/users/login").permitAll()// 로그인 엔드포인트 허용
-                .antMatchers("/users/logout").permitAll()// 로그아웃 엔드포인트 허용
-                .antMatchers("/users/check-login").permitAll() // 로그인 엔드포인트 허용
-                .antMatchers("/users/signup").permitAll() // 로그인 엔드포인트 허용
-                .antMatchers("/users/signup/**").permitAll() // 로그인 엔드포인트 허용
                 .antMatchers("/users/**").permitAll() // 로그인 엔드포인트 허용
 
                 .antMatchers("/api//send-email").permitAll() // 이메일 엔드포인트 허용
                 .antMatchers("/api//verify-email").permitAll() // 이메일 엔드포인트 허용
+//                .antMatchers("/purchase/review").hasRole("USER") // 수정된 부분
                 .antMatchers("/purchase/review").permitAll() // 수정된 부분
                 .antMatchers("/purchase/**").permitAll()
                 .antMatchers("/cart/**").permitAll()

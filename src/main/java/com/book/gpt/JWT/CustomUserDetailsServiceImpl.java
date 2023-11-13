@@ -19,7 +19,7 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
             // 사용자 정보가 존재하는 경우
             String username = user.getId();
             String password = user.getPassword();
-            String role = user.getRole(); // 사용자의 역할을 DB에서 조회
+            String role = memberDAO.findRoleById(id);
 
             System.out.println(role);
             return new CustomUserDetails(username, password, role);

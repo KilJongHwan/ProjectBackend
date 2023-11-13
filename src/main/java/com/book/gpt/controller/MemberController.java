@@ -1,5 +1,6 @@
 package com.book.gpt.controller;
 
+import com.book.gpt.JWT.CustomUserDetailsServiceImpl;
 import com.book.gpt.JWT.JwtAuthorizationFilter;
 import com.book.gpt.dao.MemberDAO;
 import com.book.gpt.dto.MemberDTO;
@@ -9,6 +10,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.GrantedAuthority;
 
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -34,6 +37,8 @@ public class MemberController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;   // Add this line
+    @Autowired
+    private CustomUserDetailsServiceImpl customUserDetailsService;
 
     // 로그인
     @PostMapping("/login")
@@ -47,8 +52,15 @@ public class MemberController {
         System.out.println(loginResult);
         if (loginResult) {
             // 로그인 성공 시 토큰 생성
-            String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
+//            String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
+//            System.out.println(role);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(id); // UserDetails 객체를 가져옴
+            System.out.println(userDetails);
+            String role = userDetails.getAuthorities().stream() // 권한 정보를 가져옴
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst().orElse("ROLE_USER"); // 권한이 없는 경우 기본값으로 "ROLE_USER"를 사용
             System.out.println(role);
+
             MemberDTO user = dao.findId(id); // 사용자 정보 조회
             user.setLoginType("general"); // 로그인 타입 설정
             String token = jwtAuthorizationFilter.generateToken(id, role);

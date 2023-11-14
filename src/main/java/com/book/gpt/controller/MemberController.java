@@ -107,7 +107,6 @@ public class MemberController {
         memberDTO.setPassword(dao.hashPassword(plainPassword)); // 해싱된 비밀번호를 저장
 
         // 회원 가입을 수행
-        memberDTO.setName("user");
         memberDTO.setCash(0);
         memberDTO.getProfileUrl();
         boolean regResult = dao.signup(memberDTO);

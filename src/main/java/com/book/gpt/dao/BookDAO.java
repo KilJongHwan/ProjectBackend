@@ -109,7 +109,6 @@ public class BookDAO {
                     String updatePurchaseCountSql = "UPDATE BOOK SET PURCHASE_COUNT = PURCHASE_COUNT + 1 WHERE ID = ?";
                     jdbcTemplate.update(updatePurchaseCountSql, bookId);
                 }
-
                 return true;
             } else {
                 return false;

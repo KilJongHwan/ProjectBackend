@@ -46,6 +46,7 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+    // 여러 책 구매
     @PostMapping("/purchase/multiple/{memberId}")
     public ResponseEntity<Boolean> purchaseBooks(@PathVariable String memberId, @RequestBody List<Integer> bookIds) {
         try {

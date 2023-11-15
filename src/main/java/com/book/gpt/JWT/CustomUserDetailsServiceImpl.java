@@ -3,9 +3,14 @@ package com.book.gpt.JWT;
 import com.book.gpt.dao.MemberDAO;
 import com.book.gpt.dto.MemberDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -19,7 +24,9 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
             // 사용자 정보가 존재하는 경우
             String username = user.getId();
             String password = user.getPassword();
-            String role = memberDAO.findRoleById(id);
+            String role = "ROLE_" + memberDAO.findRoleById(id);
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority(role));
 
             System.out.println(role);
             return new CustomUserDetails(username, password, role);

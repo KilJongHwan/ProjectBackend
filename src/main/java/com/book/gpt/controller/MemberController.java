@@ -10,6 +10,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,8 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.crypto.SecretKey;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.springframework.security.core.GrantedAuthority;
 
 
@@ -55,11 +56,11 @@ public class MemberController {
 //            String role = dao.findRoleById(id); // 사용자의 권한 정보를 가져옴
 //            System.out.println(role);
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(id); // UserDetails 객체를 가져옴
-            System.out.println(userDetails);
             String role = userDetails.getAuthorities().stream() // 권한 정보를 가져옴
                     .map(GrantedAuthority::getAuthority)
                     .findFirst().orElse("ROLE_USER"); // 권한이 없는 경우 기본값으로 "ROLE_USER"를 사용
             System.out.println(role);
+
 
             MemberDTO user = dao.findId(id); // 사용자 정보 조회
             user.setLoginType("general"); // 로그인 타입 설정
@@ -127,6 +128,9 @@ public class MemberController {
                 if (isValidToken(clientToken)) {
                     // 토큰이 유효하다면 로그인 상태
                     String id = jwtAuthorizationFilter.getIdFromToken(clientToken); // 토큰에서 사용자 ID 추출
+                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+                    System.out.println(authorities);
                     MemberDTO user = dao.findId(id); // 사용자 정보 조회
                     Map<String, Object> response = new HashMap<>();
                     response.put("message", "User is logged in");
@@ -150,7 +154,10 @@ public class MemberController {
             }
             // 백엔드에서 사용한 비밀키를 사용하여 토큰을 검증
             SecretKey key = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
-            System.out.println(key);
+            SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
+            byte[] keyBytes = secretKey.getEncoded();
+            String base64Key = Base64.getEncoder().encodeToString(keyBytes); // Base64 인코딩
+
             Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()

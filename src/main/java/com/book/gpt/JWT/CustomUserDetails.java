@@ -1,6 +1,7 @@
 package com.book.gpt.JWT;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -20,9 +21,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String roleWithPrefix = "ROLE_" + role;
-        // 사용자의 역할을 반환
-        return Collections.singleton(() -> roleWithPrefix);
+        return Collections.singleton(new SimpleGrantedAuthority(role));
     }
 
     @Override

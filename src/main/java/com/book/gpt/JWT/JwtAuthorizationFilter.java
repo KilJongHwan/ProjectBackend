@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,20 +32,27 @@ import java.util.Collection;
 import java.util.Date;
 
 @Component
-@Lazy
 public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter {
     @Value("${jwt.secret}")
     private String secretKey;
     @Autowired
     private UserDetailsService userDetailsService; // UserDetailsService 주입
 
+    @Autowired
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+        setAuthenticationManager(authenticationManager);
+    }
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        System.out.println("JwtAuthorizationFilter: doFilterInternal called for " + request.getRequestURI());
         try {
             String token = extractTokenFromRequest(request);
+            System.out.println("JwtAuthorizationFilter: doFilterInternal called for " + request.getRequestURI());
 
             if (token != null) {
                 UserDetails userDetails = validateToken(token);
+                System.out.println("JwtAuthorizationFilter: doFilterInternal called for " + request.getRequestURI());
 
                 // 사용자의 권한 정보 가져오기
                 Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
@@ -54,8 +62,8 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
                     System.out.println("Authority: " + authority.getAuthority());
                 });
 
-                JwtAuthentication jwtAuthentication = new JwtAuthentication(userDetails.getUsername());
-                Authentication authentication = new UsernamePasswordAuthenticationToken(jwtAuthentication, null, jwtAuthentication.getAuthorities());
+                // JwtAuthentication 대신 UserDetails 객체를 사용
+                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
@@ -65,9 +73,8 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return;
         }
-
-        chain.doFilter(request, response);
     }
+
 
     public String generateToken(String username, String role) {
         Date now = new Date();
@@ -80,7 +87,7 @@ public class JwtAuthorizationFilter extends UsernamePasswordAuthenticationFilter
 
 
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
-
+        System.out.println(key);
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)  // 사용자의 권한 정보를 토큰에

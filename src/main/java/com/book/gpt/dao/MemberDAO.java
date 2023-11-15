@@ -94,7 +94,7 @@ public class MemberDAO {
         String sql = "SELECT AUTH FROM MEMBER WHERE ID = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
             String auth = rs.getString("AUTH");
-            return auth.equals("0") ? "ROLE_USER" : "ROLE_ADMIN";
+            return auth.equals("0") ? "USER" : "ADMIN";
         });
     }
     public MemberDTO getUserInfo(String id) {
